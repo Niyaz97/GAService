@@ -1,0 +1,129 @@
+body {
+    background: #eee;
+    margin: 0;
+}
+.graph {
+    height: 300px;
+    width: 600px;
+}
+.metric>.form>p {
+    margin: 0;
+}
+.metric .form {
+    padding: 8px;
+    display: inline-block;
+    vertical-align: top;
+}
+.metric canvas {
+    display: inline-block;
+    vertical-align: top;
+}
+.metric input {
+    width: 140px;
+    display: block;
+    margin: 0;
+}
+.metric .form>* {
+    margin-bottom: 8px;
+}
+header {
+    width: 100%;
+    background: #fff;
+    padding: 8px 0;
+}
+header>a:not(.home) {
+    float: right;
+    font-family: 'Roboto', sans-serif;
+    padding: 16px;
+    text-decoration: none;
+    color: #969696;
+}
+header>a:not(.home):hover {
+    color: #000
+}
+header .home {
+    display: inline-block;
+    vertical-align: top;
+    height: 36px;
+    width: 36px;
+    margin: 10px 14px 6px;
+    background: url(img/home.png);
+    background-size: cover;
+}
+header .logo {
+    font-family: 'Inconsolata', monospace;
+    display: inline-block;
+    vertical-align: top;
+    font-size: 48px;
+    color: #969696;
+}
+form {
+    width: 360px;
+    margin: 68px auto 0;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 26px 38px 66px;
+}
+form input{
+    float: right;
+    width: 196px;
+    height: 18px;
+}
+form button {
+    float: right;
+    width: 200px;
+    height: 24px;
+    font-family: 'Roboto', sans-serif;
+}
+form label {
+    font-family: 'Roboto', sans-serif;
+}
+#sites {
+    background: #fff;
+    width: 480px;
+    border: 1px solid #969696;
+    margin: 0 auto 0;
+    display: none;
+    position: absolute;
+    left: 50%;
+    margin-left: -241px;
+}
+#sites p {
+    margin: 0;
+    padding: 4px;
+    font-family: 'Roboto Slab', serif;
+    font-size: 10pt;
+}
+#sites ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+#sites li{
+    padding: 12px;
+    font-size: 12pt;
+    font-family: 'Open Sans', sans-serif;
+}
+#sites li:hover {
+    background: #eee;
+}
+#sites li>span:last-child {
+    float: right;
+    font-weight: 600;
+}
+#changeSite {
+    width: 472px;
+    height: 22px;
+    padding: 4px;
+    border: 1px solid #969696;
+    margin: 34px auto 0;
+    display: block;
+    font-size: 12pt;
+    font-family: 'Open Sans', sans-serif;
+}
+
+section {
+    margin: 34px auto 0;
+    padding: 8px;
+    background: #fff;
+    box-sizing: border-box;
+}

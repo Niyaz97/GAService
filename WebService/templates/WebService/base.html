@@ -1,0 +1,30 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GAService</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link href="https://fonts.googleapis.com/css?family=Inconsolata:700|Roboto|Open+Sans:400,600" rel="stylesheet">
+</head>
+<body>
+<header>
+    <a class="home" href="{% url 'front' %}"></a>
+    <div class="logo">GAService</div>
+    {% if not user %}
+    <a href="{% url 'sign_in' %}">Вход</a>
+    <a href="{% url 'sign_up' %}">Регистрация</a>
+    {% else %}
+    <a href="{% url 'sign_out' %}">Выход</a>
+    <a href="{% url 'analytic' %}">Аналитика</a>
+    {% endif %}
+</header>
+<article id="article">
+{% block content %}
+{% endblock content %}
+{% if massage %}
+{{ massage }}
+{% endif %}
+</article>
+</body>
+</html>

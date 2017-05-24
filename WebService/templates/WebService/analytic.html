@@ -1,0 +1,54 @@
+{% extends 'WebService/base.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <input type="text" id="changeSite" value="{{ url }}">
+    <div id="sites">
+        {% if lost_sites %}
+        <p>Последние:</p>
+        <ul class="lost-sites">
+        {% for site in lost_sites %}
+            <li onclick="location.href='/analytic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if sites %}
+        <p>Остальные:</p>
+        <ul class="sites">
+        {% for site in sites %}
+            <li onclick="location.href='/analytic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+{#    {% for key, value in metrics %}#}
+{#        <div class="metric">#}
+{#            <div class="form" id="f-{{ key }}">#}
+{#                <p>Метрика</p>#}
+{#                <select id="metric-{{ key }}">#}
+{#                    <option value="city">Города</option>#}
+{#                    <option value="browser">Браузеры</option>#}
+{#                    <option value="userType">Новые пользователи</option>#}
+{#                    <option value="mobileDeviceBranding">Типы устройств</option>#}
+{#                    <option value="mobileDeviceMarketingName">Модели устройств</option>#}
+{#                    <option value="continent">Континенты</option>#}
+{#                    <option value="language">Языки</option>#}
+{#                </select>#}
+{#                <p>Начальная дата</p>#}
+{#                <input type="date" id="strdate-{{ key }}">#}
+{#                <p>Конечная дата</p>#}
+{#                <input type="date" id="enddate-{{ key }}">#}
+{#                <p>Количество пунктов</p>#}
+{#                <input type="text" id="count-{{ key }}">#}
+{#                <input type="submit" value="Обновить" onclick="reloadMetric('{{ key }}')">#}
+{#            </div>#}
+{#            <canvas class="graph" id="c-{{ key }}" width="1200" height="600">#}
+{#                <p>Ваш браузер не поддерживает рисование.</p>#}
+{#            </canvas>#}
+{#        </div>#}
+{#        <script>loadMetric('c-{{ key }}', '{{value|safe}}')</script>#}
+{#    {% endfor %}#}
+<script src="{% static 'Chart.bundle.js' %}"></script>
+<script src="{% static 'script.js' %}"></script>
+<script>loadCharts({{ viewId }})</script>
+{% endblock content %}
