@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:16.10
 MAINTAINER GAService team
 
 RUN apt-get update && \
