@@ -10,7 +10,7 @@ from .forms import AddChart
 
 flow = flow_from_clientsecrets('client_secret.json',
                                scope='https://www.googleapis.com/auth/analytics.readonly',
-                               redirect_uri='http://localhost:8000/reg')
+                               redirect_uri='http://gaservice.pw/reg')
 
 
 class Site():
