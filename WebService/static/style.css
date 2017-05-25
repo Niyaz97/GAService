@@ -65,29 +65,34 @@ header .logo {
     font-size: 48px;
     color: #969696;
 }
-section.form {
-    width: 620px;
-    margin: 68px auto 0;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 26px 38px 66px;
-}
-section.form input, section.form select{
+section form>div>input{
     float: right;
-    width: 196px;
+    width: 296px;
     height: 18px;
-    font-size: 10pt;
+    font-size: 11pt;
     font-family: 'Roboto', sans-serif;
 }
-section.form button {
+section form div.date{
     float: right;
-    width: 200px;
+    width: 298px;
+    font-size: 11pt;
+    font-family: 'Roboto', sans-serif;
+    border-radius: 0px;
+    border: 1px solid rgb(112, 112, 112);
+}
+section form button, section form select {
+    float: right;
+    width: 300px;
     height: 24px;
-    font-family: 'Roboto Slab', serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 11pt;
 }
-section.form label {
+section form>div {
     font-family: 'Roboto Slab', serif;
-    font-size: 11pt;
+    font-size: 12pt;
+    padding: 2px;
+    margin: 0;
+    height: 24px;
 }
 #sites {
     background: #fff;
@@ -133,12 +138,23 @@ section.form label {
     font-size: 12pt;
     font-family: 'Open Sans', sans-serif;
 }
-section {
+section{
     margin: 10px;
     padding: 8px;
     background: #fff;
     box-sizing: border-box;
     display: inline-block;
+}
+section.chart, section.form{
+    padding: 8px;
+    background: #fff;
+    box-sizing: border-box;
+    margin: 10px auto 10px;
+    display: block;
+}
+section.form {
+    width: 620px;
+    padding-bottom: 32px;
 }
 article{
     margin: auto;
@@ -163,8 +179,41 @@ article{
         width: 1600px;
     }
 }
-section.add-chart {
+section.add-chart div {
     background: url(img/add.png) no-repeat no-repeat center center;
     height: 300px;
     width: 300px;
+}
+section.add-chart {
+    background: none;
+}
+section.add-chart:hover {
+    background: #fff;
+}
+#sdi, #edi {
+    width: 150px;
+  /*  position: absolute;*/
+    border: none;
+    top: -200px;
+}
+#sdi:focus, #edi:focus {
+    border: none;
+    outline: none;
+}
+#sdd, #edd {
+    width: 151px;
+    display: inline-block;
+    top: -200px;
+}
+#sdd input, #edd input {
+    height: 19px;
+    font-size: 11pt;
+    font-family: 'Roboto', sans-serif;
+    width: 48px;
+    border: none;
+    text-align: right;
+}
+#sdd input:focus, #edd input:focus{
+    border: none;
+    outline: none;
 }
