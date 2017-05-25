@@ -33,9 +33,14 @@ class Chart(models.Model):
     endDate = models.CharField(max_length=16)
     width = models.IntegerField(default = 1280)
     height = models.IntegerField(default = 480)
+    max_count = models.IntegerField(default = 16)
+    numb = models.IntegerField(default=1)
 
     def __str__(self):
-        return self.site.__str__()+' '+self.metric.value
+        return str(self.viewId)+' '+self.metric.value
 
     def publish(self):
         self.save()
+
+    class Meta:
+        ordering = ["numb"]

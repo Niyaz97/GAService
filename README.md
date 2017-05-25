@@ -1,11 +1,11 @@
-# GoogleAnalytics
-[![Build Status](https://travis-ci.org/Niyaz97/TexPark_Python.svg?branch=master)](https://travis-ci.org/Niyaz97/TexPark_Python)
-
+# GoogleAnalitics
+** Описание: Будет вскоре ;)**
 
 ## Состав команды "DreamTeam13":
-* [*Атаманов Владимир*](https://github.com/atvlvi), ProPyth-11
+* [*Терёшкина Дарья*](https://github.com/buDashka), ProPyth-11
 * [*Сафиуллин Нияз*](https://github.com/Niyaz97), ProPyth-11
-
+* [*Атаманов Владимир*](https://github.com/atvlvi), ProPyth-11
+* [*Раткин Иван*](https://github.com/iratkin), ProPyth-11
 
 
 ***
