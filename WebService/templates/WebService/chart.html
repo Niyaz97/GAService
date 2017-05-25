@@ -1,0 +1,37 @@
+{% extends 'WebService/base.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <input type="text" id="changeSite" value="">
+    <div id="sites">
+        {% if lost_sites %}
+        <p>Последние:</p>
+        <ul class="lost-sites">
+        {% for site in lost_sites %}
+            <li onclick="document.location.href = '/chart?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if sites %}
+        <p>Остальные:</p>
+        <ul class="sites">
+        {% for site in sites %}
+            <li onclick="document.location.href = '/chart?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    <section id="section"><canvas id="canvas"></canvas></section>
+    <section class="form">
+        <label for="id_metric">Метрика:</label>
+        <select id="id_metric" name="metric" required="">
+            {% for metric in metrics %}
+                <option value="{{ metric.value }}">{{ metric.ru }}</option>
+            {% endfor %}
+        </select>
+        <label for="id_startDate">Дата начала:</label><input id="id_startDate" maxlength="16" name="startDate" type="text" required="">
+        <label for="id_endDate">Дата конца:</label><input id="id_endDate" maxlength="16" name="endDate" type="text" required="">
+        <label for="id_width">Ширина:</label><input id="id_width" name="width" type="number" value="1280" required="">
+        <label for="id_height">Высота:</label><input id="id_height" name="height" type="number" value="480" required="">
+    </section>
+{% endblock content %}

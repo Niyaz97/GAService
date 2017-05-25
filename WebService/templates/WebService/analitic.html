@@ -1,0 +1,30 @@
+{% extends 'WebService/base.html' %}
+{% load staticfiles %}
+
+{% block content %}
+    <input type="text" id="changeSite" value="">
+    <div id="sites">
+        {% if lost_sites %}
+        <p>Последние:</p>
+        <ul class="lost-sites">
+        {% for site in lost_sites %}
+            <li onclick="document.location.href = '/analitic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if sites %}
+        <p>Остальные:</p>
+        <ul class="sites">
+        {% for site in sites %}
+            <li onclick="document.location.href = '/analitic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+<script src="{% static 'Chart.bundle.js' %}"></script>
+{% for char in charts %}
+{% endfor %}
+    {% if not notadd %}
+    <section class="add-chart"></section>
+    {% endif %}
+{% endblock content %}

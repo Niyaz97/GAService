@@ -1,105 +1,134 @@
-from django.http import HttpResponse
-from django.utils import timezone
 from django.shortcuts import render, redirect
-from hashlib import md5
-import json
-from .models import User, Site, Lost_site, Chart, Metric
-from .forms import EnterForm, RegForm
-from .plot import get_data
 from oauth2client.client import flow_from_clientsecrets
+from oauth2client import client
+from apiclient.discovery import build
+import httplib2
+from .models import Chart, Metric
+from .forms import AddChart
+
+flow = flow_from_clientsecrets('client_secret.json',
+                               scope='https://www.googleapis.com/auth/analytics.readonly',
+                               redirect_uri='http://localhost:8000/reg')
+
+
+class Site():
+    def __init__(self, viewId, url):
+        self.viewId = viewId
+        self.url = url
 
 
 def front(request):
-    users = User.objects.all()
-    items = request.session.items()
-    return render(request, 'WebService/front.html', {'user': request.session.get('user_id'),
-                                                     'users': users,
-                                                     'session': items})
+    return render(request, 'WebService/front.html', {'user': request.session.get('user_id')})
 
 
-def sign_in(request):
-    massage = None
-    if request.method == "POST":    #если использован метод POST
-        form = EnterForm(request.POST)  #загрузить данные из POST в объект формы входа
-        if form.is_valid(): #если данные введены правильно
-            user = form.save(commit=False) #загругить данный из объекта формы в объект модели
-            if User.objects.filter(login=user.login): # если в БД есть пользователи с введённым логином
-                user_db = User.objects.filter(login=user.login)[0]  # получаем пользователя с данным логином из БД
-                hesh = md5() #объект хеширования
-                hesh.update(bytes(user.password, "UTF-8")) #хешировать пароль
-                if hesh.hexdigest() == user_db.password: #если хеш пароля совпадает с хранящимся в БД
-                    request.session['user_id'] = user_db.id #записать в сессию user_id
-                    return redirect('front') #перейти на главную страницу
-            massage = 'Введена не верная пара логин - пароль'
+def reg(request):
+    if not request.GET.get('code'):
+        auth_uri = flow.step1_get_authorize_url()
+        return redirect(auth_uri)
+    else:
+        auth_code = request.GET.get('code')
+        credentials = flow.step2_exchange(auth_code)
+        service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
+        accounts = service.management().accounts().list().execute()
+        item = accounts['items'][0]
+        request.session['user_id'] = int(item['id'])
+        request.session['credentials'] = credentials.to_json()
+        """
+        properties = service.management().webproperties().list(accountId=str(ga_id)).execute()
+        if properties.get('items'):
+            for item in properties.get('items'):
+            # Get the first property id.
+                property = item.get('id')
+
+                # Get a list of all views (profiles) for the first property.
+                profiles = service.management().profiles().list(accountId=str(ga_id),webPropertyId=property).execute()
+
+                if profiles.get('items'):
+                    # return the first view (profile) id.
+                    viewId = profiles.get('items')[0].get('id')
+                    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()),
+                                    discoveryServiceUrl=('https://analyticsreporting.googleapis.com/$discovery/rest'))
+                    data = service.reports()
+                    response = data.batchGet(
+                        body={
+                            'reportRequests': [
+                                {
+                                    'viewId': str(viewId),
+                                    'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'yesterday'}],
+                                    'metrics': [{'expression': 'ga:sessions'}],
+                                    'dimensions': [{"name": 'ga:browser'}],
+                                    'orderBys': [{"fieldName": "ga:sessions", "sortOrder": "DESCENDING"}],
+                                    'pageSize': '20'
+                                }]
+                        }
+                    ).execute()
+                    print(response)
+                    """
+        if not request.GET.get('regir'):
+            return redirect('/')
         else:
-            massage = 'Данные введены не верно'
-    return render(request, 'WebService/sign_in.html', {'user': request.session.get('user_id'),
-                                                       'form': EnterForm(),
-                                                       'massage': massage})
-    # вывод на страницу sign_in формы входа и сообщения
-
-
-def sign_up(request):
-    massage = None
-    if request.method == "POST":    #если использован метод POST
-        form = RegForm(request.POST)  #загрузить данные из POST в объект формы регистрации
-        if form.is_valid(): #если данные введены правильно
-            user = form.save(commit=False) #загругить данный из объекта формы в объект модели
-            if User.objects.filter(login=user.login):# если в БД есть пользователи с введённым логином
-                massage = 'Логин уже использован другим пользователем'
-            else:
-                hesh = md5()#объект хеширования
-                hesh.update(bytes(user.password, "UTF-8"))#хешировать пароль
-                user.password = hesh.hexdigest()#добавление пароля в объект модели
-                user.created_date = timezone.now()#добавление текущей даты в объект модели
-                user.save() #сохранение в БД
-                # request.POST['massage'] = 'Вы успешно зарегистрированны'
-                return redirect('sign_in')  # перейти на страницу входа
-        else:
-            massage = 'Данные введены не верно'
-    return render(request, 'WebService/sign_up.html', {'user': request.session.get('user_id'),
-                                                       'form': RegForm(),
-                                                       'massage': massage})
-    # вывод на страницу sign_up формы регистрации и сообщения
+            return redirect(request.GET.get('regir'))
 
 
 def sign_out(request):
     request.session.clear()     # очистить сессию
-    return redirect('front')    # перейти на главную страницу
+    return render(request, 'WebService/out.html')
 
 
 def analitic(request):
-    if request.session.get('user_id') and User.objects.filter(id=request.session.get('user_id')):
-        user = User.objects.filter(id=request.session['user_id'])[0]
-    else:
-        return 0
-    sites = list(Site.objects.filter(user=user.id))
-    for site in sites:
-        if str(site.viewId) == request.GET.get('viewId'):
-            url = site.url
-            break
-    else:
-        url = "Выберите сайт:"
-    lost_sites = [x.site for x in list(Lost_site.objects.filter(user=user.id))]
-    sites = list(set(sites) - set(lost_sites))
-    return render(request, 'WebService/analytic.html', {'user': request.session.get('user_id'),
-                                                        'sites': sites,
-                                                        'lost_sites': lost_sites,
-                                                        'url': url,
-                                                        'viewId': request.GET.get('viewId')})
+    if 'credentials' not in request.session:
+        return redirect('/reg?red=/analitic')
+    user_id = request.session['user_id']
+    credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
+    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
+    properties = service.management().webproperties().list(accountId=str(user_id)).execute()
+    items = properties.get('items')
+    sites = [Site(items[i]['internalWebPropertyId'], items[i]['websiteUrl']) for i in range(len(items))]
+    if properties.get('items'):
+        for item in properties.get('items'):
+            print(item)
+    viewId = request.GET.get('viewId')
 
+    if viewId and viewId in [site.viewId for site in sites]:
+        charts = Chart.objects.filter(viewId=int(viewId))
+        if charts:
+            return render(request, 'WebService/analitic.html', {'user': user_id,
+                                                        'sites': sites,
+                                                        'charts': charts})
+        else:
+            return redirect('/chart')
+    return render(request, 'WebService/analitic.html', {'user': user_id,
+                                                        'sites': sites,
+                                                        'notadd': True})
+
+
+def chart(request):
+    user_id = request.session['user_id']
+    if 'credentials' not in request.session:
+        return redirect('/reg?red=/analitic')
+    user_id = request.session['user_id']
+    credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
+    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
+    properties = service.management().webproperties().list(accountId=str(user_id)).execute()
+    items = properties.get('items')
+    sites = [Site(items[i]['internalWebPropertyId'], items[i]['websiteUrl']) for i in range(len(items))]
+    metrics = list(Metric.objects.all())
+    return render(request, 'WebService/chart.html', {'user': user_id,
+                                                     'sites': sites,
+                                                     'metrics': metrics})
 
 def ajax_json(request):
+    print("start ajax_json")
     json_data = []
-    if request.session.get('user_id') and request.GET.get('viewId') and Site.objects.filter(user=request.session.get('user_id'),
-                                                                                     viewId=request.GET.get('viewId')):
-        site = Site.objects.filter(user=request.session.get('user_id'), viewId=request.GET.get('viewId'))[0]
-        charts = Chart.objects.filter(site=site.id)
-        for chart in charts:
+    """
+    if request.session.get('user_id') and request.GET.get('viewId') and Site.objects.filter(user = request.session.get('user_id'),
+                                                                                     viewId = request.GET.get('viewId')):
+        site = Site.objects.filter(user = request.session.get('user_id'), viewId = request.GET.get('viewId'))[0]
+        charts = Chart.objects.filter(site = site.id)
+        def get_char(chart, number):
             api_data = json.loads(get_data(startDate=chart.startDate,
                                 endDate=chart.endDate,
                                 metric='ga:'+chart.metric.value))
-            print(api_data)
             labels = []
             data = []
             backgroundColor = []
@@ -112,8 +141,9 @@ def ajax_json(request):
                 borderColor.append('rgba(54, 162, 235, 1)')
             json_data.append(
                 {
-                'height': 240,
-                'width': 480,
+                'number': number,
+                'height': chart.height,
+                'width': chart.width,
                 'data':
                     {
     'type': 'bar',
@@ -143,15 +173,14 @@ def ajax_json(request):
                     }
                 }
             )
+            return 0
+        for i in range(len(charts)):
+            t = threading.Thread(target=get_char, args=(charts[i], i))
+            threads.append(t)
+            t.start()
+        for t in threads:
+            t.join()
+        json_data.sort(key=lambda x: x['number'])
         return HttpResponse(json.dumps(json_data))
-    else:
-        return 0
-
-
-def google_reg(request):
-    flow = flow_from_clientsecrets('client_secret.json',
-                                   scope='https://www.googleapis.com/auth/analytics.manage.users',
-                                   redirect_uri='http://localhost:8000')
-    auth_uri = flow.step1_get_authorize_url()
-    return redirect(auth_uri)
-    #return render(request, 'WebService/google_reg.html')
+    else:"""
+    return 0

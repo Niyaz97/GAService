@@ -1,19 +1,23 @@
-from oauth2client.service_account import ServiceAccountCredentials
+import argparse
+
 from apiclient.discovery import build
+from oauth2client.service_account import ServiceAccountCredentials
 import httplib2
 
 
 class Reports:
-    def __init__(self, list):
-        if list:
-            self.data = list.pop()
+    list = []
+
+    def __init__(self, in_list):
+        if in_list:
+            self.data = in_list.pop()
         else:
             credentials = ServiceAccountCredentials.from_json_keyfile_name('api_key.json',
                                                                ['https://www.googleapis.com/auth/analytics.readonly'])
-            self.data = build('analytics', 'v4', http=credentials.authorize(httplib2.Http()),
-                discoveryServiceUrl=('https://analyticsreporting.googleapis.com/$discovery/rest')).reports()
-
-        self.list = list
+            service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()),
+                discoveryServiceUrl=('https://analyticsreporting.googleapis.com/$discovery/rest'))
+            self.data = service.reports()
+        self.list = in_list
 
     def __del__(self):
         self.list.append(self.data)

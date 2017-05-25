@@ -18,7 +18,8 @@ document.getElementById("sites").onmouseout = function () {
     hover = false;
 };
 
-function loadCharts(viewId){
+function loadChart(viewId, numb){
+    document.getElementById("changeSite").value = url;
     var xhr = new XMLHttpRequest();
     xhr.open("GET", '/ajax.json?viewId=' + viewId, true);
     xhr.onreadystatechange = function () {
@@ -28,10 +29,8 @@ function loadCharts(viewId){
             alert('ошибка: ' + (this.status ? this.statusText : 'запрос не удался'));
         }
         else {
-            list = JSON.parse(xhr.responseText);
-            for (var i = 0; i < list.length; i++){
-                createChart(list[i])
-            }
+            chart = JSON.parse(xhr.responseText);
+            createChart(chart)
         }
         return 0;
     };
@@ -40,12 +39,15 @@ function loadCharts(viewId){
 
 function createChart(chartData) {
     data = chartData['data'];
-    var section = document.createElement('section');
-    var canvas = document.createElement('canvas');
-    section.appendChild(canvas);
-    section.setAttribute("id", "section");
-    article.appendChild(section);
+    var section = document.getElementById('section');
+    var canvas = document.getElementById('canvas');
     section.style.height = chartData['height']+'px';
     section.style.width = chartData['width']+'px';
+    canvas.setAttribute('height', chartData['height']+'px');
+    canvas.setAttribute('width', chartData['width']+'px');
     var myChart = new Chart(canvas, data);
+}
+
+function addSite() {
+    document.location.href = '/analitic?addSite=' + document.getElementById("changeSite").value;
 }
