@@ -2,13 +2,15 @@
 {% load staticfiles %}
 
 {% block content %}
-    <input type="text" id="changeSite" value="">
+
+    <script src="{% static 'Chart.bundle.js' %}"></script>
+    <input type="text" id="changeSite" value="{{ url }}">
     <div id="sites">
         {% if lost_sites %}
         <p>Последние:</p>
         <ul class="lost-sites">
         {% for site in lost_sites %}
-            <li onclick="document.location.href = '/analitic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+            <li onclick="document.location.href = '/analitic?viewId={{ site.view_id }}'"><span>{{ site.url }}</span><span>{{ site.view_id }}</span>
         {% endfor %}
         </ul>
         {% endif %}
@@ -16,15 +18,20 @@
         <p>Остальные:</p>
         <ul class="sites">
         {% for site in sites %}
-            <li onclick="document.location.href = '/analitic?viewId={{ site.viewId }}'"><span>{{ site.url }}</span><span>{{ site.viewId }}</span>
+            <li onclick="document.location.href = '/analitic?viewId={{ site.view_id }}'"><span>{{ site.url }}</span><span>{{ site.view_id }}</span>
         {% endfor %}
         </ul>
         {% endif %}
     </div>
-<script src="{% static 'Chart.bundle.js' %}"></script>
-{% for char in charts %}
+{% for chart in charts %}
+    <section id="section{{ chart.numb }}" onclick="document.location.href='/chart?viewId={{ view_id }}&num={{ chart.numb }}'">
+        <canvas id="canvas{{ chart.numb }}"></canvas>
+    </section>
 {% endfor %}
     {% if not notadd %}
-    <section class="add-chart"></section>
+    <section class="add-chart" onclick="document.location.href = '/chart?viewId={{ view_id }}&num=0'"><div></div></section>
+    {% endif %}
+    {% if url %}
+    <script>loadChart()</script>
     {% endif %}
 {% endblock content %}

@@ -1,6 +1,9 @@
 # GoogleAnalytics
+<<<<<<< HEAD
 [![Build Status](https://travis-ci.org/Niyaz97/GAService.svg?branch=master)](https://travis-ci.org/Niyaz97/GAService)
 
+=======
+>>>>>>> 000e5b28704c4ca4a1445f6a24c933ef4997cf8f
 
 ## Состав команды "DreamTeam13":
 * [*Атаманов Владимир*](https://github.com/atvlvi), ProPyth-11

@@ -3,17 +3,19 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client import client
 from apiclient.discovery import build
 import httplib2
+from django.http import HttpResponse
 from .models import Chart, Metric
+import json
 from .forms import AddChart
 
 flow = flow_from_clientsecrets('client_secret.json',
                                scope='https://www.googleapis.com/auth/analytics.readonly',
-                               redirect_uri='http://localhost:8000/reg')
+                               redirect_uri='http://gaservice.pw/reg')
 
 
 class Site():
-    def __init__(self, viewId, url):
-        self.viewId = viewId
+    def __init__(self, view_id, url):
+        self.view_id = view_id
         self.url = url
 
 
@@ -33,41 +35,11 @@ def reg(request):
         item = accounts['items'][0]
         request.session['user_id'] = int(item['id'])
         request.session['credentials'] = credentials.to_json()
-        """
-        properties = service.management().webproperties().list(accountId=str(ga_id)).execute()
-        if properties.get('items'):
-            for item in properties.get('items'):
-            # Get the first property id.
-                property = item.get('id')
 
-                # Get a list of all views (profiles) for the first property.
-                profiles = service.management().profiles().list(accountId=str(ga_id),webPropertyId=property).execute()
-
-                if profiles.get('items'):
-                    # return the first view (profile) id.
-                    viewId = profiles.get('items')[0].get('id')
-                    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()),
-                                    discoveryServiceUrl=('https://analyticsreporting.googleapis.com/$discovery/rest'))
-                    data = service.reports()
-                    response = data.batchGet(
-                        body={
-                            'reportRequests': [
-                                {
-                                    'viewId': str(viewId),
-                                    'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'yesterday'}],
-                                    'metrics': [{'expression': 'ga:sessions'}],
-                                    'dimensions': [{"name": 'ga:browser'}],
-                                    'orderBys': [{"fieldName": "ga:sessions", "sortOrder": "DESCENDING"}],
-                                    'pageSize': '20'
-                                }]
-                        }
-                    ).execute()
-                    print(response)
-                    """
-        if not request.GET.get('regir'):
+        if not request.GET.get('red'):
             return redirect('/')
         else:
-            return redirect(request.GET.get('regir'))
+            return redirect(request.GET.get('red'))
 
 
 def sign_out(request):
@@ -76,59 +48,132 @@ def sign_out(request):
 
 
 def analitic(request):
-    if 'credentials' not in request.session:
+    user_id = request.session.get('user_id')
+    sites = []
+    if not user_id:
         return redirect('/reg?red=/analitic')
-    user_id = request.session['user_id']
-    credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
-    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
-    properties = service.management().webproperties().list(accountId=str(user_id)).execute()
-    items = properties.get('items')
-    sites = [Site(items[i]['internalWebPropertyId'], items[i]['websiteUrl']) for i in range(len(items))]
-    if properties.get('items'):
-        for item in properties.get('items'):
-            print(item)
-    viewId = request.GET.get('viewId')
+    try:
+        credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
+        service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
+        properties = service.management().webproperties().list(accountId=str(user_id)).execute()
+        if properties.get('items'):
+            for item in properties.get('items'):
+                # Get the first property id.
+                property = item.get('id')
 
-    if viewId and viewId in [site.viewId for site in sites]:
-        charts = Chart.objects.filter(viewId=int(viewId))
+                # Get a list of all views (profiles) for the first property.
+                profiles = service.management().profiles().list(accountId=user_id,webPropertyId=property).execute()
+
+                if profiles.get('items'):
+                    sites.append(Site(profiles.get('items')[0].get('id'), profiles.get('items')[0].get('websiteUrl')))
+    except:
+        return redirect('/reg?red=/analitic')
+    view_id = request.GET.get('viewId')
+    url = None
+    for site in sites:
+        if site.view_id == view_id:
+            url = site.url
+            break
+    if view_id and url:
+        charts = Chart.objects.filter(viewId=int(view_id))
         if charts:
             return render(request, 'WebService/analitic.html', {'user': user_id,
                                                         'sites': sites,
-                                                        'charts': charts})
+                                                        'charts': charts,
+                                                        'url': url,
+                                                        'view_id': view_id})
         else:
-            return redirect('/chart')
+            return redirect('/chart?num=0&viewId='+view_id)
+
     return render(request, 'WebService/analitic.html', {'user': user_id,
                                                         'sites': sites,
                                                         'notadd': True})
 
 
 def chart(request):
-    user_id = request.session['user_id']
-    if 'credentials' not in request.session:
+    sites = []
+    user_id = request.session.get('user_id')
+    if not user_id:
         return redirect('/reg?red=/analitic')
-    user_id = request.session['user_id']
-    credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
-    service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
-    properties = service.management().webproperties().list(accountId=str(user_id)).execute()
-    items = properties.get('items')
-    sites = [Site(items[i]['internalWebPropertyId'], items[i]['websiteUrl']) for i in range(len(items))]
+    if request.method == "POST":
+        chart_num = int(request.POST.get('num'))
+        view_id = int(request.POST.get('viewId'))
+        loc_chart = Chart.objects.get(viewId=view_id, numb=chart_num)
+        loc_chart.metric = Metric.objects.get(value=request.POST.get('metric'))
+        loc_chart.startDate = request.POST.get('startDate')
+        loc_chart.endDate = request.POST.get('endDate')
+        loc_chart.max_count = request.POST.get('max_count')
+        loc_chart.width = request.POST.get('width')
+        loc_chart.height = request.POST.get('height')
+        loc_chart.save()
+        return redirect('/chart?viewId='+str(view_id)+'&num='+str(chart_num))
+    chart_num = request.GET.get('num')
+    view_id = request.GET.get('viewId')
+    if not view_id:
+        return redirect('/analitic')
+    if not chart_num:
+        return redirect('/analitic')
+    elif chart_num == '0':
+        loc_chart = Chart()
+        loc_chart.metric = Metric.objects.get(value='browser')
+        loc_chart.startDate = '2017-05-17'
+        loc_chart.endDate = '2017-05-24'
+        loc_chart.viewId = int(view_id)
+        charts = list(Chart.objects.filter(viewId=int(view_id)))
+        chart_num = len(charts) + 1
+        loc_chart.numb = chart_num
+        loc_chart.save()
+    loc_chart = Chart.objects.get(viewId=int(view_id), numb=chart_num)
+
+    try:
+        credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
+        service = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()))
+        properties = service.management().webproperties().list(accountId=str(user_id)).execute()
+        if properties.get('items'):
+            for item in properties.get('items'):
+                # Get the first property id.
+                property = item.get('id')
+
+                # Get a list of all views (profiles) for the first property.
+                profiles = service.management().profiles().list(accountId=user_id,webPropertyId=property).execute()
+
+                if profiles.get('items'):
+                    sites.append(Site(profiles.get('items')[0].get('id'), profiles.get('items')[0].get('websiteUrl')))
+    except:
+        return redirect('/reg?red=/analitic')
     metrics = list(Metric.objects.all())
+    metrics.remove(loc_chart.metric)
     return render(request, 'WebService/chart.html', {'user': user_id,
                                                      'sites': sites,
-                                                     'metrics': metrics})
+                                                     'metrics': metrics,
+                                                     'loc_chart': loc_chart})
 
 def ajax_json(request):
-    print("start ajax_json")
+    numb = request.GET.get('numb')
     json_data = []
-    """
-    if request.session.get('user_id') and request.GET.get('viewId') and Site.objects.filter(user = request.session.get('user_id'),
-                                                                                     viewId = request.GET.get('viewId')):
-        site = Site.objects.filter(user = request.session.get('user_id'), viewId = request.GET.get('viewId'))[0]
-        charts = Chart.objects.filter(site = site.id)
-        def get_char(chart, number):
-            api_data = json.loads(get_data(startDate=chart.startDate,
-                                endDate=chart.endDate,
-                                metric='ga:'+chart.metric.value))
+    if request.session.get('user_id') and request.GET.get('viewId'):
+        view_id = request.GET.get('viewId')
+        credentials = client.OAuth2Credentials.from_json(request.session['credentials'])
+        if numb:
+            charts = [Chart.objects.get(viewId=int(view_id), numb=numb)]
+        else:
+            charts = Chart.objects.filter(viewId=int(view_id))
+        for chart in charts:
+            data = build('analytics', 'v3', http=credentials.authorize(httplib2.Http()),
+                        discoveryServiceUrl=('https://analyticsreporting.googleapis.com/$discovery/rest')).reports()
+            body = {
+                    'reportRequests': []
+            }
+            body['reportRequests'].append({
+                        'viewId': str(view_id),
+                        'dateRanges': [{'startDate': chart.startDate, 'endDate': chart.endDate}],
+                        'metrics': [{'expression': 'ga:sessions'}],
+                        'dimensions': [{"name": 'ga:'+chart.metric.value}],
+                        'orderBys': [{"fieldName": "ga:sessions", "sortOrder": "DESCENDING"}],
+                        'pageSize': str(chart.max_count)
+                    })
+            report = data.batchGet(body=body).execute().get('reports')
+            api_data = report[0].get('data', {}).get('rows', [])
             labels = []
             data = []
             backgroundColor = []
@@ -139,48 +184,38 @@ def ajax_json(request):
                 data.append(metric["values"][0])
                 backgroundColor.append('rgba(54, 162, 235, 0.2)')
                 borderColor.append('rgba(54, 162, 235, 1)')
-            json_data.append(
+            json_data.append({
+                    'height': chart.height,
+                    'width': chart.width,
+                    'data':
+                        {
+
+        'type': 'bar',
+        'data': {
+            'labels': labels,
+            'datasets': [
                 {
-                'number': number,
-                'height': chart.height,
-                'width': chart.width,
-                'data':
-                    {
-    'type': 'bar',
-    'data': {
-        'labels': labels,
-        'datasets': [
-            {
-                'label': chart.metric.value,
-                'data': data,
-                'backgroundColor': backgroundColor,
-                'borderColor': borderColor,
-                'borderWidth': 1
-            }
-        ]
-    },
-    'options': {
-        'scales': {
-            'yAxes': [
-                {
-                    'ticks': {
-                        'beginAtZero': True
-                    }
+                    'label': chart.metric.value,
+                    'data': data,
+                    'backgroundColor': backgroundColor,
+                    'borderColor': borderColor,
+                    'borderWidth': 1
                 }
             ]
-        }
-    }
+        },
+        'options': {
+            'scales': {
+                'yAxes': [
+                    {
+                        'ticks': {
+                            'beginAtZero': True
+                        }
                     }
-                }
-            )
-            return 0
-        for i in range(len(charts)):
-            t = threading.Thread(target=get_char, args=(charts[i], i))
-            threads.append(t)
-            t.start()
-        for t in threads:
-            t.join()
-        json_data.sort(key=lambda x: x['number'])
+                ]
+            }
+        }
+                        }
+                    })
         return HttpResponse(json.dumps(json_data))
-    else:"""
-    return 0
+    else:
+        return 0

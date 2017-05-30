@@ -2,6 +2,7 @@
 {% load staticfiles %}
 
 {% block content %}
+    <script src="{% static 'Chart.bundle.js' %}"></script>
     <input type="text" id="changeSite" value="">
     <div id="sites">
         {% if lost_sites %}
@@ -21,17 +22,49 @@
         </ul>
         {% endif %}
     </div>
-    <section id="section"><canvas id="canvas"></canvas></section>
-    <section class="form">
-        <label for="id_metric">Метрика:</label>
-        <select id="id_metric" name="metric" required="">
-            {% for metric in metrics %}
-                <option value="{{ metric.value }}">{{ metric.ru }}</option>
-            {% endfor %}
-        </select>
-        <label for="id_startDate">Дата начала:</label><input id="id_startDate" maxlength="16" name="startDate" type="text" required="">
-        <label for="id_endDate">Дата конца:</label><input id="id_endDate" maxlength="16" name="endDate" type="text" required="">
-        <label for="id_width">Ширина:</label><input id="id_width" name="width" type="number" value="1280" required="">
-        <label for="id_height">Высота:</label><input id="id_height" name="height" type="number" value="480" required="">
+    <section id="section{{ loc_chart.numb }}">
+        <canvas id="canvas{{ loc_chart.numb }}"></canvas>
+        <script>loadChart({{ loc_chart.numb }})</script>
     </section>
+    <section class="form">
+        <form method="POST" action="/chart">{% csrf_token %}
+            <input type="hidden" name="viewId" value="{{ loc_chart.viewId }}">
+            <input type="hidden" name="num" value="{{ loc_chart.numb }}">
+            <div>Метрика:
+            <select name="metric" required="">
+                <option value="{{ loc_chart.metric.value }}" selected>{{ loc_chart.metric.ru }}</option>
+                {% for metric in metrics %}
+                    <option value="{{ metric.value }}">{{ metric.ru }}</option>
+                {% endfor %}
+            </select>
+            </div>
+            <div>Дата начала:
+                <input name="startDate" type="date" required="" id="sdi" value="{{ loc_chart.startDate }}">
+                <!--
+                <div class="date">
+                    <input name="startDate" type="date" required="" id="sdi">
+                    <div id="sdd"><input value="8" min="1" name="startDateRel" type="number" required="">дней назад</div>
+                    <input type="radio" name="rStartDate" value="0" onclick="check('sdi')">Абс.
+                    <input type="radio" name="rStartDate" value="1" onclick="check('sdd')" checked>Отн.
+                </div>
+                -->
+            </div>
+            <div>Дата конца:
+                <input name="endDate" type="date" required="" id="edi" value="{{ loc_chart.endDate }}">
+                <!--
+                <div class="date">
+                    <input name="endDate" type="date" required="" id="edi">
+                    <div id="edd"><input value="1" min="1" name="startDateRel" type="number" required="">дней назад</div>
+                    <input type="radio" name="rEndDate" value="0" onclick="check('edi')">Абс.
+                    <input type="radio" name="rEndDate" value="1" onclick="check('edd')" checked>Отн.
+                </div>
+                -->
+            </div>
+            <div>Ширина:<input name="width" type="number" value="{{ loc_chart.width }}" required=""></div>
+            <div>Высота:<input name="height" type="number" value="{{ loc_chart.height }}" required=""></div>
+            <div>Макс. количество:<input name="max_count" type="number" value="16" required="" value="{{ loc_chart.max_count }}"></div>
+        <button type="submit">Сохранить</button>
+        </form>
+    </section>
+
 {% endblock content %}
