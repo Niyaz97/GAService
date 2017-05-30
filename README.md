@@ -1,5 +1,5 @@
 # GoogleAnalytics
-[![Build Status](https://travis-ci.org/Niyaz97/TexPark_Python.svg?branch=master)](https://travis-ci.org/Niyaz97/TexPark_Python)
+[![Build Status](https://travis-ci.org/Niyaz97/GAService.svg?branch=master)](https://travis-ci.org/Niyaz97/GAService)
 
 
 ## Состав команды "DreamTeam13":
